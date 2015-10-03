@@ -1,4 +1,10 @@
 
+/**
+ * JMS Training Part (doesn’t count for evaluation)
+ *
+ * 1. Run the example available at:
+ * http://eai-course.blogspot.pt/2015/03/java-message-service-20-with-wildfly-8.html
+ */
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
 import javax.jms.JMSContext;
