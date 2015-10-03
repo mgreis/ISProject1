@@ -2,11 +2,7 @@
 /**
  * JMS Training Part (doesn’t count for evaluation)
  *
- * 2. Assume now that the sender needs to receive a reply, but you do not want
- * to configure a dedicated queue for that. Which mechanism could you use? Write
- * the necessary code, sending a reply with a set of key-values. (HINT for the
- * sender: use the createTemporaryQueue() and a TextMessage in the JMSContext;
- * then, use the setJMSReplyTo() in the message).
+ * 3. Write code that sends text messages to multiple subscribers at once.
  */
 import javax.jms.ConnectionFactory;
 import javax.jms.Destination;
