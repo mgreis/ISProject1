@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+This is a sample file produced according to schema.xsd.
+that will be produced from the following url:
+http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-topsellers-1-100-page-19883-s.html
+-->
+<report
+    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
+    xsi:noNamespaceSchemaLocation='schema.xsd'
+    timestamp="1470322440">
+    <smartphone>
+        <title>SAMSUNG Galaxy S5 - preto - Smartphone</title>
+        <price currency="EUR">344.99999</price>
+        <details>http://www.pixmania.pt/smartphone/samsung-galaxy-s5-preto-smartphone/22082447-a.html</details>
+    </smartphone>
+    <smartphone>
+        <title>LG G3 - Titânio - 16 GB - 4G - Smartphone</title>
+        <price currency="EUR">308.99999</price>
+        <details>http://www.pixmania.pt/smartphone/lg-g3-titanio-16-gb-4g-smartphone/22181506-a.html</details>
+    </smartphone>
+</report>
