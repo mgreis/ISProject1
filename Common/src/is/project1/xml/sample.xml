@@ -4,10 +4,7 @@ This is a sample file produced according to schema.xsd.
 that will be produced from the following url:
 http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-topsellers-1-100-page-19883-s.html
 -->
-<report
-    xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'
-    xsi:noNamespaceSchemaLocation='schema.xsd'
-    timestamp="1470322440">
+<report timestamp="1470322440">
     <smartphone>
         <title>SAMSUNG Galaxy S5 - preto - Smartphone</title>
         <price currency="EUR">344.99999</price>

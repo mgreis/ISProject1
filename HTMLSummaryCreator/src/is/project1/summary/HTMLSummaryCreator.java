@@ -24,6 +24,9 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Properties;
 import javax.jms.JMSException;
 import javax.jms.TextMessage;
@@ -34,10 +37,14 @@ import javax.jms.TopicSession;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import javax.xml.validation.SchemaFactory;
+import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
 
 /**
  * Receives XML messages from the WebCrawler topic and generates html pages.
@@ -62,49 +69,57 @@ public class HTMLSummaryCreator implements Runnable {
     private final String user;
     private final String pass;
     private final File dir;
-    private final TopicConnectionFactory factory;
+    private final TopicConnectionFactory topicFactory;
     private final Topic topic;
 
     public HTMLSummaryCreator() throws IOException, NamingException {
         final Properties config = Config.load();
         user = config.getProperty("user", DEFAULT_USER);
         pass = config.getProperty("pass", DEFAULT_PASS);
-        dir = new File(config.getProperty("pass", DEFAULT_DIR));
+        dir = new File(config.getProperty("dir", DEFAULT_DIR));
         if (!(dir.isDirectory() && dir.canWrite())) {
-            throw new SecurityException("\"" + dir.getPath() + "\" is not a writable directory");
+            throw new SecurityException("\"" + dir.getCanonicalPath() + "\" is not a writable directory");
         }
-        this.factory = InitialContext.doLookup(config.getProperty("factory", DEFAULT_FACTORY));
+        this.topicFactory = InitialContext.doLookup(config.getProperty("topicFactory", DEFAULT_FACTORY));
         this.topic = InitialContext.doLookup(config.getProperty("topic", DEFAULT_TOPIC));
     }
 
     @Override
     public void run() {
-        for (;;) {
-            try {
-                //final String xml = new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())));
-                final String xml = this.receive();
-                // validate
-                final StreamSource schemaSource = new StreamSource(getClass().getResourceAsStream("/is/project1/xml/schema.xsd"));
-                SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-                        .newSchema(schemaSource)
-                        .newValidator()
-                        .validate(new StreamSource(new StringReader(xml)));
-                // transform to html
-                final StreamSource xslSource = new StreamSource(getClass().getResourceAsStream("/is/project1/summary/transform.xsl"));
-                final StreamResult htmlResult = new StreamResult(new StringWriter());
-                TransformerFactory.newInstance()
-                        .newTransformer(xslSource)
-                        .transform(new StreamSource(new StringReader(xml)), htmlResult);
-                final String html = htmlResult.getWriter().toString();
-                // write html
-                final String htmlFilename = Long.toString(System.currentTimeMillis()) + ".html";
-                try (FileWriter writer = new FileWriter(htmlFilename)) {
-                    writer.write(html);
-                }
-                System.out.println("Wrote " + htmlFilename);
-            } catch (Exception ex) {
-                throw new RuntimeException(ex); // @todo blow up or not?
+        try {
+            final String xml = new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())));
+            //final String xml = this.receive();
+            // parse
+            final Document document = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(xml)));
+            // validate
+            final StreamSource schemaSource = new StreamSource(getClass().getResourceAsStream("/is/project1/xml/schema.xsd"));
+            SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+                    .newSchema(schemaSource)
+                    .newValidator()
+                    .validate(new DOMSource(document));
+            // transform
+            final Path xslPath = Paths.get(dir.getCanonicalPath(), "to_html.xsl");
+            if (!xslPath.toFile().exists()) {
+                Files.copy(getClass().getResourceAsStream("/is/project1/summary/to_html.xsl"), xslPath);
+                System.out.println("Wrote " + xslPath);
             }
+            document.setXmlStandalone(true);
+            document.insertBefore(
+                    document.createProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"to_html.xsl\""),
+                    document.getDocumentElement());
+            final StreamResult xmlResult = new StreamResult(new StringWriter());
+            TransformerFactory.newInstance()
+                    .newTransformer()
+                    .transform(new DOMSource(document), xmlResult);
+            final Path resultPath = Paths.get(dir.getCanonicalPath(), document.getDocumentElement().getAttribute("timestamp") + ".xml");
+            try (FileWriter writer = new FileWriter(resultPath.toFile())) {
+                writer.write(xmlResult.getWriter().toString());
+            }
+            System.out.println("Wrote " + resultPath);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex); // @todo blow up or not?
         }
     }
 
@@ -115,7 +130,7 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws JMSException
      */
     private String receive() throws JMSException {
-        try (TopicConnection connection = factory.createTopicConnection(user, pass)) {
+        try (TopicConnection connection = topicFactory.createTopicConnection(user, pass)) {
             connection.setClientID(CLIENT_ID);
             connection.start();
             final TextMessage message = (TextMessage) connection
