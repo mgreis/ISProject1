@@ -21,7 +21,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import is.project1.xml.*;
+import java.io.FileWriter;
+import java.io.StringWriter;
 import java.math.BigDecimal;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 
 /**
  *
@@ -51,24 +56,29 @@ public class Engine extends Thread {
                 if (!input.exists()) {
                     input.createNewFile();
                 }
-
+                System.out.println (s);
                 Document doc = Jsoup.connect(s).timeout(20000).get();
 
                 Elements exp = doc.select("article");
 
                 for (Element article : exp) {
                     Smartphone phone = new Smartphone();
-                    Elements description3 = article.select("[itemprop=\"description\"] li");
+                    
 
                     // title
-                    Elements title = article.select(".productAdditional [href]");
-                    phone.setDetails(title.text());
+                    Elements title = article.select(".productTitle");
+                    phone.setTitle(title.text());
 
                     // descrition
+                    Elements description3 = article.select("[itemprop=\"description\"] li");
                     for (Element desc : description3) {
+                       
                         phone.getDescription().add(desc.text());
+                      
 
                     }
+                    
+                      
 
                     // price
                     Money money = new Money();
@@ -85,10 +95,19 @@ public class Engine extends Thread {
 
                     report.getSmartphone().add(phone);
                 }
+                StringWriter writer = new StringWriter();
+                JAXBContext context;
+
+                context = JAXBContext.newInstance(ObjectFactory.class, Report.class, Smartphone.class, Money.class);
+
+                Marshaller marshaller = context.createMarshaller();
+                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+                marshaller.marshal(report, writer);
+                System.out.println(writer.toString());
 
             }
 
-        } catch (IOException ex) {
+        } catch (Exception ex) {
             Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
             System.out.println("not found");
         }
