@@ -15,6 +15,7 @@
     <xs:complexType name="Smartphone">
         <xs:sequence>
             <xs:element name="title" type="xs:string"/>
+            <xs:element name="description" type="Description"/>
             <xs:element name="price" type="Money"/>
             <xs:element name="details" type="xs:anyURI"/>
         </xs:sequence>
@@ -36,4 +37,8 @@
             </xs:extension>
         </xs:simpleContent>
     </xs:complexType>
+
+    <xs:simpleType name="Description">
+        <xs:list itemType="xs:string"/>
+    </xs:simpleType>
 </xs:schema>
