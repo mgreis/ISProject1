@@ -20,6 +20,8 @@ import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
+import is.project1.xml.*;
+import java.math.BigDecimal;
 
 /**
  *
@@ -30,6 +32,7 @@ public class Engine extends Thread {
     private ArrayList<SmartPhone> smartPhoneList = new ArrayList<>();
     private List<String> brandAndModel;
     private List<String> webAddresses;
+    private Report report = new Report();
 
     public void run() {
         this.getSmartPhonesFromFile();
@@ -38,7 +41,7 @@ public class Engine extends Thread {
     }
 
     private void crawl() {
-        int cont = 1;
+
         try {
 
             for (String s : webAddresses) {
@@ -51,47 +54,38 @@ public class Engine extends Thread {
 
                 Document doc = Jsoup.connect(s).timeout(20000).get();
 
-                for (String s2 : brandAndModel) {
+                Elements exp = doc.select("article");
 
-                    Elements elements1 = doc.select("article:contains(" + s2 + ") li");
-                    Elements elements2 = doc.select("article:contains(" + s2 + ") a");
-                    if (!elements1.isEmpty() && !elements2.isEmpty()) {
-                        SmartPhone phone = new SmartPhone();
-                       // System.out.println("attrib: "+elements2.get(0).attr("href"));
-                        if (elements1.size() >0) {
-                            phone.setProcessor(elements1.get(0).text());
-                        }
-                        if (elements1.size() >1) {
-                            phone.setScreenTech(elements1.get(1).text());
-                        }
-                        if (elements1.size() >2) {
-                            phone.setScreenSize(elements1.get(2).text());
-                        }
-                        if (elements1.size() >3) {
-                            phone.setOtherInfo(elements1.get(3).text());
-                        }
-                        if (elements2.size() >3) {
-                            phone.setBestPrice(elements2.get(3).text());
-                        }
-                        if (elements2.size() >4) {
-                            phone.setOurPrice(elements2.get(4).text());
-                        }
-                        if (elements2.size() > 0){
-                            phone.setAddress(elements2.get(0).attr("href"));
-                        }
-                        if (elements2.size() >1) {
-                            String[] auxBrand = elements2.get(1).text().split(" ", 2);
-                            phone.setBrand(auxBrand[0]);
-                            phone.setModel(auxBrand[1]);
-                            phone.printPhone();
-                            
-                            smartPhoneList.add(phone);
-                        }
+                for (Element article : exp) {
+                    Smartphone phone = new Smartphone();
+                    Elements description3 = article.select("[itemprop=\"description\"] li");
+
+                    // title
+                    Elements title = article.select(".productAdditional [href]");
+                    phone.setDetails(title.text());
+
+                    // descrition
+                    for (Element desc : description3) {
+                        phone.getDescription().add(desc.text());
 
                     }
 
+                    // price
+                    Money money = new Money();
+                    Elements currentPrice = article.select("[itemprop=\"price\"]");
+                    money.setValue(new BigDecimal(currentPrice.attr("content")));
+
+                    Elements currency = article.select("[itemprop=\"priceCurrency\"]");
+                    money.setCurrency(currency.attr("content"));
+                    phone.setPrice(money);
+
+                    //details
+                    Elements url = article.select(".productAdditional [href]");
+                    phone.setDetails(url.attr("href"));
+
+                    report.getSmartphone().add(phone);
                 }
-                cont++;
+
             }
 
         } catch (IOException ex) {
