@@ -16,42 +16,80 @@
     <xsl:template match="/">
         <html>
             <head>
-                <title>Report Summary</title>
+                <title>Report</title>
+                <style>
+                    /* table border */
+                    table {border-collapse: collapse;}
+                    table, th, td {border: 1px solid black;}
+
+                    /* table header background */
+                    th {background-color: #9acd32;}
+
+                    /* list 'headers' */
+                    dt {font-weight: bold;}
+                </style>
             </head>
             <body>
-                <p>
-                    Report Timestamp:
-                    <xsl:value-of select="report/@timestamp"/>
-                    <!-- @todo transform timestamp -->
-                </p>
-                <table border="1">
-                    <thead>
-                        <tr bgcolor="#9acd32">
-                            <th style="text-align:left">Title</th>
-                            <th style="text-align:left">Price</th>
-                            <th style="text-align:left">Details</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <xsl:for-each select="report/smartphone">
-                            <tr>
-                                <td>
-                                    <xsl:value-of select="title"/>
-                                </td>
-                                <td>
-                                    <xsl:value-of select="price"/>
-                                    <xsl:text> </xsl:text>
-                                    <xsl:value-of select="price/@currency"/>
-                                </td>
-                                <td>
-                                    <a href="{details}">link</a>
-                                </td>
-                            </tr>
-                        </xsl:for-each>
-                    </tbody>
-                </table>
+                <xsl:apply-templates select="report" />
             </body>
         </html>
     </xsl:template>
 
+    <xsl:template match="report">
+        <dl>
+            <dt>Crawler</dt>
+            <dd>
+                <xsl:value-of select="@crawler"/>
+            </dd>
+            <dt>Timestamp</dt>
+            <dd>
+                <xsl:value-of select="@timestamp"/>
+                <!-- @todo transform timestamp -->
+            </dd>
+        </dl>
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align:left">Title</th>
+                    <th style="text-align:left">Description</th>
+                    <th style="text-align:left">Price</th>
+                    <th style="text-align:left">URL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <xsl:for-each select="smartphone">
+                    <xsl:apply-templates select="." />
+                </xsl:for-each>
+            </tbody>
+        </table>
+    </xsl:template>
+  
+    <xsl:template match="smartphone">
+        <tr>
+            <td>
+                <xsl:value-of select="title"/>
+            </td>
+            <td>
+                <dl>
+                    <xsl:for-each select="description/item">
+                        <dt>
+                            <xsl:value-of select="@name"/>
+                        </dt>
+                        <dd>
+                            <xsl:value-of select="."/>
+                        </dd>
+                    </xsl:for-each>
+                </dl>
+            </td>
+            <td>
+                <xsl:value-of select="price"/>
+                <xsl:text> </xsl:text>
+                <xsl:value-of select="price/@currency"/>
+            </td>
+            <td>
+                <a href="{url}">link</a>
+            </td>
+        </tr>
+    </xsl:template>
+  
 </xsl:stylesheet>

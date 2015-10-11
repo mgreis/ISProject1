@@ -65,6 +65,7 @@ public class HTMLSummaryCreator implements Runnable {
     public static final String DEFAULT_DIR = ".";
     public static final String DEFAULT_FACTORY = "jms/RemoteConnectionFactory";
     public static final String DEFAULT_TOPIC = "IS/Project1/WebCrawlerTopic";
+    public static volatile boolean DEBUG = false;
 
     private final String user;
     private final String pass;
@@ -87,8 +88,9 @@ public class HTMLSummaryCreator implements Runnable {
     @Override
     public void run() {
         try {
-            final String xml = new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())));
-            //final String xml = this.receive();
+            final String xml = DEBUG
+                    ? new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())))
+                    : this.receive();
             // parse
             final Document document = DocumentBuilderFactory.newInstance()
                     .newDocumentBuilder()
@@ -101,10 +103,11 @@ public class HTMLSummaryCreator implements Runnable {
                     .validate(new DOMSource(document));
             // transform
             final Path xslPath = Paths.get(dir.getCanonicalPath(), "to_html.xsl");
-            if (!xslPath.toFile().exists()) {
-                Files.copy(getClass().getResourceAsStream("/is/project1/summary/to_html.xsl"), xslPath);
-                System.out.println("Wrote " + xslPath);
+            if (xslPath.toFile().exists()) {
+                Files.delete(xslPath);
             }
+            Files.copy(getClass().getResourceAsStream("/is/project1/summary/to_html.xsl"), xslPath);
+            System.out.println("Wrote " + xslPath);
             document.setXmlStandalone(true);
             document.insertBefore(
                     document.createProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"to_html.xsl\""),
@@ -119,7 +122,7 @@ public class HTMLSummaryCreator implements Runnable {
             }
             System.out.println("Wrote " + resultPath);
         } catch (Exception ex) {
-            throw new RuntimeException(ex); // @todo blow up or not?
+            ex.printStackTrace();
         }
     }
 
@@ -148,8 +151,11 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws Exception if anything bad happens
      */
     public static void main(String[] args) throws Exception {
-        final HTMLSummaryCreator app = new HTMLSummaryCreator();
-        app.run();
+        //DEBUG = true;
+        do {
+            final HTMLSummaryCreator app = new HTMLSummaryCreator();
+            app.run();
+        } while (!DEBUG); // infinite loop if not debugging
     }
 
 }
