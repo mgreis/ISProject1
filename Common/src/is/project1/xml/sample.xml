@@ -4,26 +4,22 @@ This is a sample file produced according to schema.xsd.
 that will be produced from the following url:
 http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-topsellers-1-100-page-19883-s.html
 -->
-<report timestamp="1444595841" crawler="sample.xml">
+<report version="1.0" timestamp="1444595841" crawler="sample.xml">
     <smartphone>
         <title>SAMSUNG Galaxy S5 - preto - Smartphone</title>
-        <description>
-            <item name="processador">Quad-Core 2,5 GHz memória RAM: 2 GB</item>
-            <item name="Tecnologia do ecrã">Capacitivo - Super AMOLED</item>
-            <item name="Tamanho do ecrã">5,1" (1920 x 1080 pixeis)</item>
-            <item name="Resolução máxima (em pixeis)">Máquina fotográfica (atrás): 16 megapixeis Câmara frontal: 2 megapixeis</item>
-        </description>
+        <description name="processador">Quad-Core 2,5 GHz memória RAM: 2 GB</description>
+        <description name="Tecnologia do ecrã">Capacitivo - Super AMOLED</description>
+        <description name="Tamanho do ecrã">5,1" (1920 x 1080 pixeis)</description>
+        <description name="Resolução máxima (em pixeis)">Máquina fotográfica (atrás): 16 megapixeis Câmara frontal: 2 megapixeis</description>
         <price currency="EUR">344.99999</price>
         <url>http://www.pixmania.pt/smartphone/samsung-galaxy-s5-preto-smartphone/22082447-a.html</url>
     </smartphone>
     <smartphone>
         <title>LG G3 - Titânio - 16 GB - 4G - Smartphone</title>
-        <description>
-            <item name="processador">Snapdragon 801 AC Quad Core 2,5 GHz</item>
-            <item name="Tecnologia do ecrã">Tátil capacitivo</item>
-            <item name="Tamanho do ecrã">5,5" (2560 x 1440 pixeis)</item>
-            <item name="Resolução máxima (em pixeis)">13 MP</item>
-        </description>
+        <description name="processador">Snapdragon 801 AC Quad Core 2,5 GHz</description>
+        <description name="Tecnologia do ecrã">Tátil capacitivo</description>
+        <description name="Tamanho do ecrã">5,5" (2560 x 1440 pixeis)</description>
+        <description name="Resolução máxima (em pixeis)">13 MP</description>
         <price currency="EUR">308.99999</price>
         <url>http://www.pixmania.pt/smartphone/lg-g3-titanio-16-gb-4g-smartphone/22181506-a.html</url>
     </smartphone>

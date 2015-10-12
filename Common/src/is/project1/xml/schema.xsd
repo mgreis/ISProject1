@@ -6,6 +6,14 @@
             <xs:sequence>
                 <xs:element name="smartphone" type="Smartphone" minOccurs="0" maxOccurs="unbounded"/>
             </xs:sequence>
+            <xs:attribute name="version" use="required">
+                <xs:simpleType>                
+                    <xs:restriction base="xs:decimal">
+                        <!-- we only know about version 1.0 -->
+                        <xs:enumeration value="1.0" />
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
             <xs:attribute name="timestamp" type="xs:nonNegativeInteger" use="required"/>
             <xs:attribute name="crawler" type="xs:string" use="required"/>
         </xs:complexType>
@@ -15,10 +23,18 @@
     <xs:complexType name="Smartphone">
         <xs:sequence>
             <xs:element name="title" type="xs:string"/>
-            <xs:element name="description" type="DescriptionList"/>
+            <xs:element name="description" type="Description" minOccurs="0" maxOccurs="unbounded"/>
             <xs:element name="price" type="Price"/>
             <xs:element name="url" type="xs:anyURI"/>
         </xs:sequence>
+    </xs:complexType>
+
+    <xs:complexType name="Description">
+        <xs:simpleContent>
+            <xs:extension base="xs:string">
+                <xs:attribute name="name" use="required"/>
+            </xs:extension>
+        </xs:simpleContent>
     </xs:complexType>
 
     <xs:complexType name="Price">
@@ -217,24 +233,6 @@
                 </xs:attribute>
             </xs:extension>
         </xs:simpleContent>
-    </xs:complexType>
-
-    <xs:complexType name="DescriptionList">
-        <xs:sequence>
-            <xs:element name="item" type="DescriptionItem" minOccurs="0" maxOccurs="unbounded"/>
-        </xs:sequence>
-    </xs:complexType>
-    
-    <xs:complexType name="DescriptionItem">
-        <xs:simpleContent>
-            <xs:extension base="xs:string">
-                <xs:attribute name="name"/>
-            </xs:extension>
-        </xs:simpleContent>
-        <!--xs:sequence>
-            <xs:element name="name" type="xs:string"/>
-            <xs:element name="value" type="xs:string"/>
-        </xs:sequence-->
     </xs:complexType>
 
 </xs:schema>

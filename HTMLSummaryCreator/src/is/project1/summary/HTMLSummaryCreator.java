@@ -19,6 +19,7 @@ package is.project1.summary;
  * Deadline: 2015-10-16
  */
 import is.project1.config.Config;
+import is.project1.xml.XmlHelper;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -36,15 +37,11 @@ import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicSession;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.xml.XMLConstants;
-import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import javax.xml.validation.SchemaFactory;
 import org.w3c.dom.Document;
-import org.xml.sax.InputSource;
 
 /**
  * Receives XML messages from the WebCrawler topic and generates html pages.
@@ -91,38 +88,32 @@ public class HTMLSummaryCreator implements Runnable {
             final String xml = DEBUG
                     ? new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())))
                     : this.receive();
-            // parse
-            final Document document = DocumentBuilderFactory.newInstance()
-                    .newDocumentBuilder()
-                    .parse(new InputSource(new StringReader(xml)));
+
             // validate
-            final StreamSource schemaSource = new StreamSource(getClass().getResourceAsStream("/is/project1/xml/schema.xsd"));
-            SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
-                    .newSchema(schemaSource)
-                    .newValidator()
-                    .validate(new DOMSource(document));
-            // transform
+            XmlHelper.validate(new StreamSource(new StringReader(xml)));
+
+            // copy external stylesheet
             final Path xslPath = Paths.get(dir.getCanonicalPath(), "to_html.xsl");
             if (xslPath.toFile().exists()) {
-                Files.delete(xslPath);
+                Files.delete(xslPath); // @todo replace? compare contents?
             }
             Files.copy(getClass().getResourceAsStream("/is/project1/summary/to_html.xsl"), xslPath);
             System.out.println("Wrote " + xslPath);
+
+            // use external stylesheet
+            final Document document = XmlHelper.toDocument(xml);
             document.setXmlStandalone(true);
             document.insertBefore(
                     document.createProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"to_html.xsl\""),
                     document.getDocumentElement());
-            final StreamResult xmlResult = new StreamResult(new StringWriter());
-            TransformerFactory.newInstance()
-                    .newTransformer()
-                    .transform(new DOMSource(document), xmlResult);
+            final String xmlResult = XmlHelper.toString(document);
             final Path resultPath = Paths.get(dir.getCanonicalPath(), document.getDocumentElement().getAttribute("timestamp") + ".xml");
             try (FileWriter writer = new FileWriter(resultPath.toFile())) {
-                writer.write(xmlResult.getWriter().toString());
+                writer.write(xmlResult);
             }
             System.out.println("Wrote " + resultPath);
         } catch (Exception ex) {
-            ex.printStackTrace();
+            ex.printStackTrace(System.out);
         }
     }
 
@@ -151,7 +142,7 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws Exception if anything bad happens
      */
     public static void main(String[] args) throws Exception {
-        //DEBUG = true;
+        DEBUG = true;
         do {
             final HTMLSummaryCreator app = new HTMLSummaryCreator();
             app.run();

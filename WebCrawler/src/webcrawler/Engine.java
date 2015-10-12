@@ -5,148 +5,102 @@
  */
 package webcrawler;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jsoup.*;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import is.project1.xml.*;
-import java.io.FileWriter;
-import java.io.StringWriter;
 import java.math.BigDecimal;
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
+import java.math.BigInteger;
 
 /**
  *
  * @author Mário
+ * @author Flávio J. Saraiva
  */
 public class Engine extends Thread {
 
-    private ArrayList<SmartPhone> smartPhoneList = new ArrayList<>();
-    private List<String> brandAndModel;
     private List<String> webAddresses;
-    private Report report = new Report();
+    private final Report report = new Report();
 
+    @Override
     public void run() {
-        this.getSmartPhonesFromFile();
-        this.getWebAddresses();
-        this.crawl();
-    }
-
-    private void crawl() {
-
         try {
-
-            for (String s : webAddresses) {
-
-                //System.out.println(s);
-                File input = new File("temp.html");
-                if (!input.exists()) {
-                    input.createNewFile();
-                }
-                System.out.println (s);
-                Document doc = Jsoup.connect(s).timeout(20000).get();
-
-                Elements exp = doc.select("article");
-
-                for (Element article : exp) {
-                    Smartphone phone = new Smartphone();
-                    
-
-                    // title
-                    Elements title = article.select(".productTitle");
-                    phone.setTitle(title.text());
-
-                    // descrition
-                    Elements description3 = article.select("[itemprop=\"description\"] li");
-                    for (Element desc : description3) {
-                       
-                        phone.getDescription().add(desc.text());
-                      
-
-                    }
-                    
-                      
-
-                    // price
-                    Money money = new Money();
-                    Elements currentPrice = article.select("[itemprop=\"price\"]");
-                    money.setValue(new BigDecimal(currentPrice.attr("content")));
-
-                    Elements currency = article.select("[itemprop=\"priceCurrency\"]");
-                    money.setCurrency(currency.attr("content"));
-                    phone.setPrice(money);
-
-                    //details
-                    Elements url = article.select(".productAdditional [href]");
-                    phone.setDetails(url.attr("href"));
-
-                    report.getSmartphone().add(phone);
-                }
-                StringWriter writer = new StringWriter();
-                JAXBContext context;
-
-                context = JAXBContext.newInstance(ObjectFactory.class, Report.class, Smartphone.class, Money.class);
-
-                Marshaller marshaller = context.createMarshaller();
-                marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
-                marshaller.marshal(report, writer);
-                System.out.println(writer.toString());
-
-            }
-
+            this.getWebAddresses();
+            this.crawl();
         } catch (Exception ex) {
-            Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("not found");
+            ex.printStackTrace(System.out);
         }
-
-        // img with src ending .png
     }
 
-    private void getSmartPhonesFromFile() {
+    private void crawl() throws Exception {
+        report.setVersion(new BigDecimal("1.0"));
+        report.setCrawler("WebCrawler");
+        report.setTimestamp(BigInteger.valueOf(System.currentTimeMillis()));
 
-        try {
-            brandAndModel = Files.readAllLines(Paths.get("smartphones.txt"), StandardCharsets.UTF_8);
-            /*int cont=1;
-             for(String s:lines){
-             System.out.println(cont+s);
-             cont++;
-             }*/
+        // buscar dados
+        for (String webAddress : webAddresses) {
+            if (webAddress.trim().isEmpty()) {
+                continue;// ignorar endereços vazios
+            }
+            System.out.println(webAddress);
+            final Document html = Jsoup.connect(webAddress).timeout(20000).get();
 
-        } catch (IOException ex) {
-            Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("smartphones.txt not found.");
+            final Elements htmlArticles = html.select("article");
+            for (Element htmlArticle : htmlArticles) {
+                final Smartphone smartphone = new Smartphone();
+
+                // title
+                final Elements htmlTitle = htmlArticle.select(".productTitle");
+                smartphone.setTitle(htmlTitle.text().trim());
+
+                // descrition
+                final Elements htmlDescriptions = htmlArticle.select("[itemprop=\"description\"] li");
+                for (Element htmlDescription : htmlDescriptions) {
+                    System.out.println(htmlDescription.text());
+                    final String[] parts = htmlDescription.text().split(":", 2);
+                    if (parts.length == 2) {
+                        final Description description = new Description();
+                        description.setName(parts[0].trim());
+                        description.setValue(parts[1].trim());
+                        smartphone.getDescription().add(description);
+                    }
+                }
+
+                // price
+                final Elements htmlPrice = htmlArticle.select("[itemprop=\"price\"]");
+                final Elements htmlCurrency = htmlArticle.select("[itemprop=\"priceCurrency\"]");
+                final Price xmlPrice = new Price();
+                xmlPrice.setValue(new BigDecimal(htmlPrice.attr("content")));
+                xmlPrice.setCurrency(htmlCurrency.attr("content"));
+                smartphone.setPrice(xmlPrice);
+
+                // url
+                final Elements url = htmlArticle.select(".productAdditional [href]");
+                smartphone.setUrl(url.attr("href"));
+
+                report.getSmartphone().add(smartphone);
+            }
         }
 
+        // pôr report no tópico em formato xml
+        final String xml = XmlHelper.toString(report);
+        System.out.println(xml);
+        // TODO tópico
     }
 
-    private void getWebAddresses() {
-
-        try {
-            webAddresses = Files.readAllLines(Paths.get("webAdresses.txt"), StandardCharsets.UTF_8);
-            /*int cont=1;
-             for(String s:webAddresses){
-             System.out.println(cont+s);
-             cont++;
-             }*/
-
-        } catch (IOException ex) {
-            Logger.getLogger(Engine.class.getName()).log(Level.SEVERE, null, ex);
-            System.out.println("webAdresses.txt not found.");
-        }
-
+    private void getWebAddresses() throws IOException {
+        this.webAddresses = Files.readAllLines(Paths.get("webAdresses.txt"), StandardCharsets.UTF_8);
+        /*int cont=1;
+         for(String s:webAddresses){
+         System.out.println(cont+s);
+         cont++;
+         }*/
     }
 
 }

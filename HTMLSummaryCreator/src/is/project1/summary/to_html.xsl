@@ -37,14 +37,18 @@
 
     <xsl:template match="report">
         <dl>
-            <dt>Crawler</dt>
+            <dt>Version</dt>
             <dd>
-                <xsl:value-of select="@crawler"/>
+                <xsl:value-of select="@version"/>
             </dd>
             <dt>Timestamp</dt>
             <dd>
                 <xsl:value-of select="@timestamp"/>
                 <!-- @todo transform timestamp -->
+            </dd>
+            <dt>Crawler</dt>
+            <dd>
+                <xsl:value-of select="@crawler"/>
             </dd>
         </dl>
         <table>
@@ -57,9 +61,7 @@
                 </tr>
             </thead>
             <tbody>
-                <xsl:for-each select="smartphone">
-                    <xsl:apply-templates select="." />
-                </xsl:for-each>
+                <xsl:apply-templates select="smartphone" />
             </tbody>
         </table>
     </xsl:template>
@@ -71,7 +73,7 @@
             </td>
             <td>
                 <dl>
-                    <xsl:for-each select="description/item">
+                    <xsl:for-each select="description">
                         <dt>
                             <xsl:value-of select="@name"/>
                         </dt>
