@@ -52,4 +52,19 @@ public class Debug {
             ex.printStackTrace(System.out);
         }
     }
+
+    /**
+     * Lê os argumentos da consola para saber se deve estar ativo ou não.
+     *
+     * @param args
+     */
+    public static void main(String[] args) {
+        for (String arg : args) {
+            if ("--debug".equals(arg)) {
+                ENABLED = true;
+            } else if ("--nodebug".equals(arg)) {
+                ENABLED = false;
+            }
+        }
+    }
 }

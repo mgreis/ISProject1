@@ -13,6 +13,12 @@ import java.util.Properties;
  */
 public class Config {
 
+    public static final String PROPERTY_USER = "user";
+    public static final String PROPERTY_PASS = "pass";
+    public static final String PROPERTY_SUMMARY_DIR = "summaryDir";
+    public static final String PROPERTY_TOPIC_FACTORY = "topicFacory";
+    public static final String PROPERTY_TOPIC_NAME = "topicName";
+
     public static final String DEFAULT_USER = "user";
     public static final String DEFAULT_PASS = "pass";
     public static final String DEFAULT_SUMMARY_DIR = ".";
@@ -74,11 +80,11 @@ public class Config {
      */
     public static Properties defaultProperties() {
         final Properties defaults = new Properties();
-        defaults.setProperty("user", DEFAULT_USER);
-        defaults.setProperty("pass", DEFAULT_PASS);
-        defaults.setProperty("summaryDir", DEFAULT_SUMMARY_DIR);
-        defaults.setProperty("topicFactory", DEFAULT_TOPIC_FACTORY);
-        defaults.setProperty("topicName", DEFAULT_TOPIC_NAME);
+        defaults.setProperty(PROPERTY_USER, DEFAULT_USER);
+        defaults.setProperty(PROPERTY_PASS, DEFAULT_PASS);
+        defaults.setProperty(PROPERTY_SUMMARY_DIR, DEFAULT_SUMMARY_DIR);
+        defaults.setProperty(PROPERTY_TOPIC_FACTORY, DEFAULT_TOPIC_FACTORY);
+        defaults.setProperty(PROPERTY_TOPIC_NAME, DEFAULT_TOPIC_NAME);
         return defaults;
     }
 

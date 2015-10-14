@@ -140,20 +140,20 @@ public class HTMLSummaryCreator implements Runnable {
         }
 
         // credentials
-        user = config.getProperty("user");
-        pass = config.getProperty("pass");
-        Debug.format("user: %s\n", user);
-        Debug.format("pass: %s\n", pass);
+        user = config.getProperty(Config.PROPERTY_USER);
+        pass = config.getProperty(Config.PROPERTY_PASS);
+        Debug.format("%s: %s\n", Config.PROPERTY_USER, user);
+        Debug.format("%s: %s\n", Config.PROPERTY_PASS, pass);
 
         // where we store our summaries
-        final String summaryDir = config.getProperty("dir");
-        Debug.format("summaryDir: %s\n", summaryDir);
+        final String summaryDir = config.getProperty(Config.PROPERTY_SUMMARY_DIR);
+        Debug.format("%s: %s\n", Config.PROPERTY_SUMMARY_DIR, summaryDir);
         dir = new File(summaryDir);
         if (!dir.isDirectory() || !dir.canWrite()) {
-            System.out.println("ERROR: summaryDir is not a writable directory.");
+            System.out.println("ERROR: not a writable directory.");
             try {
                 Debug.format("Canonical path of summaryDir: \"%s\"\n", dir.getCanonicalPath());
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 Debug.println("failed to get the cannonical path.");
                 Debug.printStackTrace(ex);
             }
@@ -161,10 +161,10 @@ public class HTMLSummaryCreator implements Runnable {
         }
 
         // JMS topic
-        final String topicFactory = config.getProperty("topicFactory");
-        final String topicName = config.getProperty("topicName");
-        Debug.format("topicFactory: %s\n", topicFactory);
-        Debug.format("topicName: %s\n", topicName);
+        final String topicFactory = config.getProperty(Config.PROPERTY_TOPIC_FACTORY);
+        final String topicName = config.getProperty(Config.PROPERTY_TOPIC_NAME);
+        Debug.format("%s: %s\n", Config.PROPERTY_TOPIC_FACTORY, topicFactory);
+        Debug.format("%s: %s\n", Config.PROPERTY_TOPIC_NAME, topicName);
         try {
             connectionFactory = InitialContext.doLookup(topicFactory);
         } catch (NamingException ex) {
@@ -211,7 +211,7 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws Exception if anything bad happens
      */
     public static void main(String[] args) throws Exception {
-        Debug.ENABLED = true;
+        Debug.main(args);
         do {
             final HTMLSummaryCreator app = new HTMLSummaryCreator();
             app.run();
