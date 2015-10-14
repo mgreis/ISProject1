@@ -21,11 +21,10 @@ import javax.xml.bind.Marshaller;
 import java.math.BigInteger;
 
 /**
- * The crawler itself.
- * Gets the html from the pages in the web addresses on the txt file.
- * Extracts necessary information and retrieves it to an xml 
- * finally tests the xml agains the schema and sends it to the topic
- * 
+ * The crawler itself. Gets the html from the pages in the web addresses on the
+ * txt file. Extracts necessary information and retrieves it to an xml finally
+ * tests the xml agains the schema and sends it to the topic
+ *
  * @author Mário
  * @author Flávio J. Saraiva
  */
@@ -89,9 +88,6 @@ public class Engine extends Thread {
                 // url
                 final Elements url = htmlArticle.select(".productAdditional [href]");
                 smartphone.setUrl(url.attr("href"));
-                //publish in topic
-                Sender sender=new Sender(writer.toString());
-                sender.run();
 
                 report.getSmartphone().add(smartphone);
             }
@@ -99,8 +95,8 @@ public class Engine extends Thread {
 
         // pôr report no tópico em formato xml
         final String xml = XmlHelper.toString(report);
-        System.out.println(xml);
-        // TODO tópico
+        Sender sender = new Sender(xml);
+        sender.run();
     }
 
     private void getWebAddresses() throws IOException {
