@@ -28,7 +28,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import javax.jms.JMSConsumer;
+import javax.jms.JMSContext;
 import javax.jms.JMSException;
+import javax.jms.JMSRuntimeException;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 import javax.jms.TopicConnection;
@@ -139,6 +142,25 @@ public class HTMLSummaryCreator implements Runnable {
                     .receive();
             return message.getText();
         }
+
+    }
+    /**
+     * Receive a XML string from the WebCrawler topic using jms 2.0.
+     *
+     * @return xml string.
+     * @throws JMSException
+     */
+    private String receive2() throws JMSException {
+        String message = "fail";
+
+        try (JMSContext jcontext = topicFactory.createContext(user, pass);) {
+            jcontext.setClientID(CLIENT_ID);
+            JMSConsumer mc = jcontext.createDurableConsumer(topic, "htmlSummaryCreator");
+            message = mc.receiveBody(String.class);
+        } catch (JMSRuntimeException re) {
+            re.printStackTrace();
+        }
+        return message;
     }
 
     /**

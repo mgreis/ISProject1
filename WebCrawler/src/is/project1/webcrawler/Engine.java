@@ -3,11 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package webcrawler;
+package is.project1.webcrawler;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -21,15 +19,17 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import is.project1.xml.*;
-import java.io.FileWriter;
 import java.io.StringWriter;
 import java.math.BigDecimal;
 import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 
 /**
- *
+ * The crawler itself.
+ * Gets the html from the pages in the web addresses on the txt file.
+ * Extracts necessary information and retrieves it to an xml 
+ * finally tests the xml agains the schema and sends it to the topic
+ * 
  * @author Mário
  */
 public class Engine extends Thread {

@@ -1,4 +1,4 @@
-package webcrawler;
+package is.project1.webcrawler;
 
 /**
  * HTML Summary Creator
@@ -24,13 +24,12 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.Properties;
+import javax.jms.JMSContext;
 import javax.jms.JMSException;
-import javax.jms.Session;
-import javax.jms.TextMessage;
+import javax.jms.JMSProducer;
+import javax.jms.JMSRuntimeException;
 import javax.jms.Topic;
-import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
-import javax.jms.TopicSession;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.xml.XMLConstants;
@@ -109,12 +108,18 @@ public class Sender implements Runnable {
      * @throws JMSException
      */
     private void send() throws JMSException {
-        TopicConnection connection = topicFactory.createTopicConnection(user, pass);
-        connection.setClientID(CLIENT_ID);
-        connection.start();
-        Session session = connection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
-        TextMessage msg = session.createTextMessage(message);
-        session.createProducer(topic).send(msg);
+        /*TopicConnection connection = topicFactory.createTopicConnection(user, pass);
+         connection.setClientID(CLIENT_ID);
+         connection.start();
+         Session session = connection.createTopicSession(false, TopicSession.AUTO_ACKNOWLEDGE);
+         TextMessage msg = session.createTextMessage(message);
+         session.createProducer(topic).send(msg);*/
+        try (JMSContext jcontext = topicFactory.createContext(user, pass);) {
+            JMSProducer mp = jcontext.createProducer();
+            mp.send(topic, message);
+        } catch (JMSRuntimeException re) {
+            re.printStackTrace();
 
+        }
     }
 }
