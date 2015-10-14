@@ -15,7 +15,7 @@ public class Config {
 
     public static final String DEFAULT_USER = "user";
     public static final String DEFAULT_PASS = "pass";
-    public static final String DEFAULT_DIR = ".";
+    public static final String DEFAULT_SUMMARY_DIR = ".";
     public static final String DEFAULT_TOPIC_FACTORY = "jms/RemoteConnectionFactory";
     public static final String DEFAULT_TOPIC_NAME = "IS/Project1/WebCrawlerTopic";
 
@@ -63,7 +63,7 @@ public class Config {
     public static void store(Properties properties) throws IOException {
         assert (properties != null);
         try (FileWriter writer = new FileWriter(CONFIG_FILE)) {
-            properties.store(writer, "Project #1 - IS 2015/16 – 1st Semester MEI");
+            properties.store(writer, "Project #1 - IS 2015/16 - 1st Semester MEI");
         }
     }
 
@@ -76,9 +76,18 @@ public class Config {
         final Properties defaults = new Properties();
         defaults.setProperty("user", DEFAULT_USER);
         defaults.setProperty("pass", DEFAULT_PASS);
-        defaults.setProperty("dir", DEFAULT_DIR);
+        defaults.setProperty("summaryDir", DEFAULT_SUMMARY_DIR);
         defaults.setProperty("topicFactory", DEFAULT_TOPIC_FACTORY);
         defaults.setProperty("topicName", DEFAULT_TOPIC_NAME);
         return defaults;
+    }
+
+    /**
+     * Writes the config file with default values to disk.
+     *
+     * @param args
+     */
+    public static void main(String[] args) throws Exception {
+        store(defaultProperties());
     }
 }
