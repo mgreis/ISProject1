@@ -13,6 +13,12 @@ import java.util.Properties;
  */
 public class Config {
 
+    public static final String DEFAULT_USER = "user";
+    public static final String DEFAULT_PASS = "pass";
+    public static final String DEFAULT_DIR = ".";
+    public static final String DEFAULT_TOPIC_FACTORY = "jms/RemoteConnectionFactory";
+    public static final String DEFAULT_TOPIC_NAME = "IS/Project1/WebCrawlerTopic";
+
     /**
      * Configuration file.
      *
@@ -21,19 +27,31 @@ public class Config {
     public static final String CONFIG_FILE = "config.properties";
 
     /**
-     * Reads the configuration file properties.
+     * Reads the configuration file and joins them with the default properties.
+     *
+     * @param defaults default properties.
+     * @return the properties.
+     * @throws IOException if an error occurred when reading.
+     */
+    public static Properties load(Properties defaults) throws IOException {
+        assert (defaults != null);
+        final Properties properties = new Properties(defaults);
+        try (FileReader reader = new FileReader(CONFIG_FILE)) {
+            properties.load(reader);
+        } catch (FileNotFoundException ex) {
+            // use defaults
+        }
+        return properties;
+    }
+
+    /**
+     * Reads the configuration file and joins them with the default properties.
      *
      * @return the properties.
      * @throws IOException if an error occurred when reading.
      */
     public static Properties load() throws IOException {
-        try (FileReader reader = new FileReader(CONFIG_FILE)) {
-            final Properties properties = new Properties();
-            properties.load(reader);
-            return properties;
-        } catch (FileNotFoundException ex) {
-            return new Properties(); // use defaults
-        }
+        return load(defaultProperties());
     }
 
     /**
@@ -49,4 +67,18 @@ public class Config {
         }
     }
 
+    /**
+     * Returns the default properties.
+     *
+     * @return Default properties.
+     */
+    public static Properties defaultProperties() {
+        final Properties defaults = new Properties();
+        defaults.setProperty("user", DEFAULT_USER);
+        defaults.setProperty("pass", DEFAULT_PASS);
+        defaults.setProperty("dir", DEFAULT_DIR);
+        defaults.setProperty("topicFactory", DEFAULT_TOPIC_FACTORY);
+        defaults.setProperty("topicName", DEFAULT_TOPIC_NAME);
+        return defaults;
+    }
 }

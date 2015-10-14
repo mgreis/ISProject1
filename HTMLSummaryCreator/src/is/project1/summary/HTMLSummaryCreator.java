@@ -57,11 +57,6 @@ public class HTMLSummaryCreator implements Runnable {
 
     public static final String CLIENT_ID = "HTMLSummaryCreator";
     public static final String SUBSCRIPTION_NAME = "one";
-    public static final String DEFAULT_USER = "user";
-    public static final String DEFAULT_PASS = "pass";
-    public static final String DEFAULT_DIR = ".";
-    public static final String DEFAULT_FACTORY = "jms/RemoteConnectionFactory";
-    public static final String DEFAULT_TOPIC = "IS/Project1/WebCrawlerTopic";
     public static volatile boolean DEBUG = false;
 
     private final String user;
@@ -71,15 +66,15 @@ public class HTMLSummaryCreator implements Runnable {
     private final Topic topic;
 
     public HTMLSummaryCreator() throws IOException, NamingException {
-        final Properties config = Config.load();
-        user = config.getProperty("user", DEFAULT_USER);
-        pass = config.getProperty("pass", DEFAULT_PASS);
-        dir = new File(config.getProperty("dir", DEFAULT_DIR));
+        final Properties config = Config.load(Config.defaultProperties());
+        user = config.getProperty("user");
+        pass = config.getProperty("pass");
+        dir = new File(config.getProperty("dir"));
         if (!(dir.isDirectory() && dir.canWrite())) {
             throw new SecurityException("\"" + dir.getCanonicalPath() + "\" is not a writable directory");
         }
-        this.topicFactory = InitialContext.doLookup(config.getProperty("topicFactory", DEFAULT_FACTORY));
-        this.topic = InitialContext.doLookup(config.getProperty("topic", DEFAULT_TOPIC));
+        this.topicFactory = InitialContext.doLookup(config.getProperty("topicFactory"));
+        this.topic = InitialContext.doLookup(config.getProperty("topic"));
     }
 
     @Override
