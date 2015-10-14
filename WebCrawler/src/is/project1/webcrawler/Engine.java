@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package webcrawler;
+package is.project1.webcrawler;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -16,10 +16,16 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import is.project1.xml.*;
 import java.math.BigDecimal;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Marshaller;
 import java.math.BigInteger;
 
 /**
- *
+ * The crawler itself.
+ * Gets the html from the pages in the web addresses on the txt file.
+ * Extracts necessary information and retrieves it to an xml 
+ * finally tests the xml agains the schema and sends it to the topic
+ * 
  * @author Mário
  * @author Flávio J. Saraiva
  */
@@ -83,6 +89,9 @@ public class Engine extends Thread {
                 // url
                 final Elements url = htmlArticle.select(".productAdditional [href]");
                 smartphone.setUrl(url.attr("href"));
+                //publish in topic
+                Sender sender=new Sender(writer.toString());
+                sender.run();
 
                 report.getSmartphone().add(smartphone);
             }

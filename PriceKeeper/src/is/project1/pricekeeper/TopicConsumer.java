@@ -1,4 +1,4 @@
-package is.project1.summary;
+package is.project1.pricekeeper;
 
 /**
  * HTML Summary Creator
@@ -19,15 +19,13 @@ package is.project1.summary;
  * Deadline: 2015-10-16
  */
 import is.project1.config.Config;
-import is.project1.xml.XmlHelper;
+import is.project1.xml.Money;
+import is.project1.xml.ObjectFactory;
+import is.project1.xml.Report;
+import is.project1.xml.Smartphone;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 import javax.jms.JMSConsumer;
 import javax.jms.JMSContext;
@@ -40,78 +38,83 @@ import javax.jms.TopicConnectionFactory;
 import javax.jms.TopicSession;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.xml.transform.TransformerFactory;
+import javax.xml.XMLConstants;
+import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
+import javax.xml.validation.SchemaFactory;
 import org.w3c.dom.Document;
+import org.xml.sax.InputSource;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
+import javax.xml.bind.Unmarshaller;
 
 /**
- * Receives XML messages from the WebCrawler topic and generates html pages.
+ * Receives XML messages from the WebCrawler topic and stores it in an object.
  *
  * The program only stops when there is an exception.
  *
  * The user should have the permissions <code>createDurableQueue</code> and
  * <code>deleteDurableQueue</code>.
  *
- * @author Flávio J. Saraiva
+ * @author Mário Alves Pereira
  */
-public class HTMLSummaryCreator implements Runnable {
+public class TopicConsumer implements Runnable {
 
     public static final String CLIENT_ID = "HTMLSummaryCreator";
     public static final String SUBSCRIPTION_NAME = "one";
-    public static volatile boolean DEBUG = false;
+    public static final String DEFAULT_USER = "user";
+    public static final String DEFAULT_PASS = "pass";
+    public static final String DEFAULT_DIR = ".";
+    public static final String DEFAULT_FACTORY = "jms/RemoteConnectionFactory";
+    public static final String DEFAULT_TOPIC = "IS/Project1/WebCrawlerTopic";
 
     private final String user;
     private final String pass;
     private final File dir;
     private final TopicConnectionFactory topicFactory;
     private final Topic topic;
+    private Report report;
+    
 
-    public HTMLSummaryCreator() throws IOException, NamingException {
-        final Properties config = Config.load(Config.defaultProperties());
-        user = config.getProperty("user");
-        pass = config.getProperty("pass");
-        dir = new File(config.getProperty("dir"));
+    public TopicConsumer(Report report) throws IOException, NamingException {
+        this.report=report;
+        final Properties config = Config.load();
+        user = config.getProperty("user", DEFAULT_USER);
+        pass = config.getProperty("pass", DEFAULT_PASS);
+        dir = new File(config.getProperty("dir", DEFAULT_DIR));
         if (!(dir.isDirectory() && dir.canWrite())) {
             throw new SecurityException("\"" + dir.getCanonicalPath() + "\" is not a writable directory");
         }
-        this.topicFactory = InitialContext.doLookup(config.getProperty("topicFactory"));
-        this.topic = InitialContext.doLookup(config.getProperty("topic"));
+        this.topicFactory = InitialContext.doLookup(config.getProperty("topicFactory", DEFAULT_FACTORY));
+        this.topic = InitialContext.doLookup(config.getProperty("topic", DEFAULT_TOPIC));
     }
 
     @Override
     public void run() {
         try {
-            final String xml = DEBUG
-                    ? new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())))
-                    : this.receive();
-
+            final String xml = this.receive2();
+            //final String xml = this.receive();
+            // parse
+            final Document document = DocumentBuilderFactory.newInstance()
+                    .newDocumentBuilder()
+                    .parse(new InputSource(new StringReader(xml)));
             // validate
-            XmlHelper.validate(new StreamSource(new StringReader(xml)));
-
-            // copy external stylesheet
-            final Path xslPath = Paths.get(dir.getCanonicalPath(), "to_html.xsl");
-            if (xslPath.toFile().exists()) {
-                Files.delete(xslPath); // @todo replace? compare contents?
-            }
-            Files.copy(getClass().getResourceAsStream("/is/project1/summary/to_html.xsl"), xslPath);
-            System.out.println("Wrote " + xslPath);
-
-            // use external stylesheet
-            final Document document = XmlHelper.toDocument(xml);
-            document.setXmlStandalone(true);
-            document.insertBefore(
-                    document.createProcessingInstruction("xml-stylesheet", "type=\"text/xsl\" href=\"to_html.xsl\""),
-                    document.getDocumentElement());
-            final String xmlResult = XmlHelper.toString(document);
-            final Path resultPath = Paths.get(dir.getCanonicalPath(), document.getDocumentElement().getAttribute("timestamp") + ".xml");
-            try (FileWriter writer = new FileWriter(resultPath.toFile())) {
-                writer.write(xmlResult);
-            }
-            System.out.println("Wrote " + resultPath);
+            final StreamSource schemaSource = new StreamSource(getClass().getResourceAsStream("/is/project1/xml/schema.xsd"));
+            SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI)
+                    .newSchema(schemaSource)
+                    .newValidator()
+                    .validate(new DOMSource(document));
+            // transformTODO
+           
+        JAXBContext context = JAXBContext.newInstance(ObjectFactory.class, Report.class, Smartphone.class, Money.class);
+        Unmarshaller unmarshaller = context.createUnmarshaller();
+        
+        report = (Report) unmarshaller.unmarshal(new StringReader(xml));
+            
         } catch (Exception ex) {
-            ex.printStackTrace(System.out);
+            throw new RuntimeException(ex); // @todo blow up or not?
         }
     }
 
@@ -147,23 +150,9 @@ public class HTMLSummaryCreator implements Runnable {
             JMSConsumer mc = jcontext.createDurableConsumer(topic, "htmlSummaryCreator");
             message = mc.receiveBody(String.class);
         } catch (JMSRuntimeException re) {
-            re.printStackTrace();
         }
         return message;
     }
-
-    /**
-     * Starting point of the console app.
-     *
-     * @param args ignored.
-     * @throws Exception if anything bad happens
-     */
-    public static void main(String[] args) throws Exception {
-        DEBUG = true;
-        do {
-            final HTMLSummaryCreator app = new HTMLSummaryCreator();
-            app.run();
-        } while (!DEBUG); // infinite loop if not debugging
-    }
+ 
 
 }

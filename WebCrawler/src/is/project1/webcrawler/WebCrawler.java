@@ -1,4 +1,4 @@
-package webcrawler;
+package is.project1.webcrawler;
 
 import java.util.Timer;
 import java.util.TimerTask;
