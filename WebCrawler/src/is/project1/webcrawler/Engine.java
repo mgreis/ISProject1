@@ -105,8 +105,8 @@ public class Engine extends Thread {
                 marshaller.marshal(report, writer);
                 System.out.println(writer.toString());
                 //publish in topic
-                
-                
+                Sender sender=new Sender(writer.toString());
+                sender.run();
 
             }
 
