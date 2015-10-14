@@ -19,30 +19,22 @@ package is.project1.summary;
  * Deadline: 2015-10-16
  */
 import is.project1.config.Config;
+import is.project1.debug.Debug;
 import is.project1.xml.XmlHelper;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
 import javax.jms.JMSConsumer;
 import javax.jms.JMSContext;
-import javax.jms.JMSException;
-import javax.jms.JMSRuntimeException;
-import javax.jms.TextMessage;
 import javax.jms.Topic;
-import javax.jms.TopicConnection;
 import javax.jms.TopicConnectionFactory;
-import javax.jms.TopicSession;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.w3c.dom.Document;
 
@@ -59,46 +51,60 @@ import org.w3c.dom.Document;
 public class HTMLSummaryCreator implements Runnable {
 
     public static final String CLIENT_ID = "HTMLSummaryCreator";
-    public static final String SUBSCRIPTION_NAME = "one";
-    public static volatile boolean DEBUG = false;
+    public static final String SUBSCRIPTION_NAME = "only one subscription";
 
-    private final String user;
-    private final String pass;
-    private final File dir;
-    private final TopicConnectionFactory topicFactory;
-    private final Topic topic;
+    private String user;
+    private String pass;
+    private File dir;
+    private TopicConnectionFactory connectionFactory;
+    private Topic topic;
 
-    public HTMLSummaryCreator() throws IOException, NamingException {
-        final Properties config = Config.load(Config.defaultProperties());
-        user = config.getProperty("user");
-        pass = config.getProperty("pass");
-        dir = new File(config.getProperty("dir"));
-        if (!(dir.isDirectory() && dir.canWrite())) {
-            throw new SecurityException("\"" + dir.getCanonicalPath() + "\" is not a writable directory");
-        }
-        this.topicFactory = InitialContext.doLookup(config.getProperty("topicFactory"));
-        this.topic = InitialContext.doLookup(config.getProperty("topic"));
+    public HTMLSummaryCreator() {
     }
 
     @Override
     public void run() {
+        // load (according to config)
+        if (!load()) {
+            return;
+        }
+
+        // receive message
+        final String xml;
         try {
-            final String xml = DEBUG
-                    ? new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())))
-                    : this.receive();
+            xml = receive();
+            Debug.println(xml);
+        } catch (Exception ex) {
+            System.out.println("ERROR: Failed to receive message.");
+            Debug.printStackTrace(ex);
+            return;
+        }
 
-            // validate
+        // validate message
+        try {
             XmlHelper.validate(new StreamSource(new StringReader(xml)));
+        } catch (Exception ex) {
+            System.out.println("ERROR: Failed to validate.");
+            Debug.printStackTrace(ex);
+            return;
+        }
 
-            // copy external stylesheet
+        // copy external stylesheet
+        try {
             final Path xslPath = Paths.get(dir.getCanonicalPath(), "to_html.xsl");
             if (xslPath.toFile().exists()) {
                 Files.delete(xslPath); // @todo replace? compare contents?
             }
             Files.copy(getClass().getResourceAsStream("/is/project1/summary/to_html.xsl"), xslPath);
             System.out.println("Wrote " + xslPath);
+        } catch (Exception ex) {
+            System.out.println("ERROR: Failed to copy external stylesheet.");
+            Debug.printStackTrace(ex);
+            return;
+        }
 
-            // use external stylesheet
+        // write modified xml (uses external stylesheet)
+        try {
             final Document document = XmlHelper.toDocument(xml);
             document.setXmlStandalone(true);
             document.insertBefore(
@@ -111,45 +117,91 @@ public class HTMLSummaryCreator implements Runnable {
             }
             System.out.println("Wrote " + resultPath);
         } catch (Exception ex) {
-            ex.printStackTrace(System.out);
+            System.out.println("ERROR: Failed to write xml.");
+            Debug.printStackTrace(ex);
+            return;
         }
     }
 
     /**
-     * Receive a XML string from the WebCrawler topic.
+     * Load everything according to the config file.
      *
-     * @return xml string.
-     * @throws JMSException
+     * @return True if it succeeded.
      */
-    private String receive() throws JMSException {
-        try (TopicConnection connection = topicFactory.createTopicConnection(user, pass)) {
-            connection.setClientID(CLIENT_ID);
-            connection.start();
-            final TextMessage message = (TextMessage) connection
-                    .createTopicSession(false/* not transacted */, TopicSession.AUTO_ACKNOWLEDGE)
-                    .createDurableSubscriber(topic, SUBSCRIPTION_NAME)
-                    .receive();
-            return message.getText();
+    private boolean load() {
+        // load config
+        final Properties config;
+        try {
+            config = Config.load(Config.defaultProperties());
+        } catch (Exception ex) {
+            System.out.println("ERROR: Failed to read config file.");
+            Debug.printStackTrace(ex);
+            return false;
         }
 
+        // credentials
+        user = config.getProperty("user");
+        pass = config.getProperty("pass");
+        Debug.format("user: %s\n", user);
+        Debug.format("pass: %s\n", pass);
+
+        // where we store our summaries
+        final String summaryDir = config.getProperty("dir");
+        Debug.format("summaryDir: %s\n", summaryDir);
+        dir = new File(summaryDir);
+        if (!dir.isDirectory() || !dir.canWrite()) {
+            System.out.println("ERROR: summaryDir is not a writable directory.");
+            try {
+                Debug.format("Canonical path of summaryDir: \"%s\"\n", dir.getCanonicalPath());
+            } catch (IOException ex) {
+                Debug.println("failed to get the cannonical path.");
+                Debug.printStackTrace(ex);
+            }
+            return false;
+        }
+
+        // JMS topic
+        final String topicFactory = config.getProperty("topicFactory");
+        final String topicName = config.getProperty("topicName");
+        Debug.format("topicFactory: %s\n", topicFactory);
+        Debug.format("topicName: %s\n", topicName);
+        try {
+            connectionFactory = InitialContext.doLookup(topicFactory);
+        } catch (NamingException ex) {
+            System.out.println("ERROR: Failed to get topic factory.");
+            Debug.printStackTrace(ex);
+            return false;
+        }
+        try {
+            topic = InitialContext.doLookup(topicName);
+        } catch (NamingException ex) {
+            System.out.println("ERROR: Failed to get topic.");
+            Debug.printStackTrace(ex);
+            return false;
+        }
+
+        return true; // all ok
     }
-    /**
-     * Receive a XML string from the WebCrawler topic using jms 2.0.
-     *
-     * @return xml string.
-     * @throws JMSException
-     */
-    private String receive2() throws JMSException {
-        String message = "fail";
 
-        try (JMSContext jcontext = topicFactory.createContext(user, pass);) {
-            jcontext.setClientID(CLIENT_ID);
-            JMSConsumer mc = jcontext.createDurableConsumer(topic, "htmlSummaryCreator");
-            message = mc.receiveBody(String.class);
-        } catch (JMSRuntimeException re) {
-            re.printStackTrace();
+    /**
+     * Receive a XML message from the WebCrawler topic using jms 2.0.
+     *
+     * If debug is enabled, it returns the sample message.
+     *
+     * @return The xml message.
+     * @throws Exception If something went wrong.
+     */
+    private String receive() throws Exception {
+        if (Debug.ENABLED) {
+            // read sample
+            return new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())));
         }
-        return message;
+        // read topic
+        try (JMSContext context = connectionFactory.createContext(user, pass)) {
+            context.setClientID(CLIENT_ID);
+            final JMSConsumer consumer = context.createDurableConsumer(topic, SUBSCRIPTION_NAME);
+            return consumer.receiveBody(String.class);
+        }
     }
 
     /**
@@ -159,11 +211,11 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws Exception if anything bad happens
      */
     public static void main(String[] args) throws Exception {
-        DEBUG = true;
+        Debug.ENABLED = true;
         do {
             final HTMLSummaryCreator app = new HTMLSummaryCreator();
             app.run();
-        } while (!DEBUG); // infinite loop if not debugging
+        } while (!Debug.ENABLED); // infinite loop if not debugging
     }
 
 }
