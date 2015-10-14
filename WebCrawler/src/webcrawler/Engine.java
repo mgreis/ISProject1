@@ -104,6 +104,9 @@ public class Engine extends Thread {
                 marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
                 marshaller.marshal(report, writer);
                 System.out.println(writer.toString());
+                //publish in topic
+                
+                
 
             }
 
@@ -148,5 +151,7 @@ public class Engine extends Thread {
         }
 
     }
+    
+    
 
 }
