@@ -11,7 +11,9 @@ import is.project1.xml.XmlHelper;
 import java.io.Console;
 import java.io.File;
 import java.io.FileWriter;
+import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -25,6 +27,8 @@ import javax.jms.TemporaryQueue;
 import javax.jms.TextMessage;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
 import org.w3c.dom.Document;
 
@@ -77,13 +81,22 @@ public class PriceRequester implements Runnable {
 
             // write to console (uses external stylesheet)
             try {
-                final Document document = XmlHelper.toDocument(xml);
-                /**
-                 * TODO write results to console
-                 */
                 
-               
                 
+                 // get search template
+                // https://weblogs.java.net/blog/pat/archive/2004/10/stupid_scanner.html
+                final InputStream xslStream = getClass().getResourceAsStream("/is/project1/pricerequeste/to_text.xsl");
+                final String xsl = new Scanner(xslStream, "UTF-8").useDelimiter("\\A").next();
+                
+                 //transform xml to plain text
+                final StringWriter writer = new StringWriter();
+                TransformerFactory.newInstance()
+                        .newTransformer(new StreamSource(new StringReader(xsl)))
+                        .transform(new StreamSource(new StringReader(xml)), new StreamResult(writer));
+                
+                //print to screen
+                System.out.println(writer.toString());
+
             } catch (Exception ex) {
                 System.out.println("ERROR: Failed to write xml.");
                 Debug.printStackTrace(ex);
