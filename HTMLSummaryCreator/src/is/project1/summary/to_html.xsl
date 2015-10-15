@@ -8,11 +8,11 @@
         Create a summary of the xml data.
 -->
 
-<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0"
-                xmlns:timestamp="java://io.project1.summary.TimestampFormatter"
-                extension-element-prefixes="timestamp">
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" version="1.0">
+
     <xsl:output method="html"/>
 
+    <!-- Html page -->
     <xsl:template match="/">
         <html>
             <head>
@@ -35,6 +35,7 @@
         </html>
     </xsl:template>
 
+    <!-- Put data in a table -->
     <xsl:template match="report">
         <dl>
             <dt>Version</dt>
@@ -65,7 +66,8 @@
             </tbody>
         </table>
     </xsl:template>
-  
+
+    <!-- Smartphone table row -->
     <xsl:template match="smartphone">
         <tr>
             <td>

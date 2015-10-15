@@ -23,25 +23,25 @@ import is.project1.debug.Debug;
 import is.project1.xml.XmlHelper;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
+import java.io.InputStream;
 import java.io.StringReader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
+import java.util.Scanner;
 import javax.jms.JMSConsumer;
 import javax.jms.JMSContext;
 import javax.jms.Topic;
 import javax.jms.TopicConnectionFactory;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.xml.transform.stream.StreamSource;
 import org.w3c.dom.Document;
 
 /**
  * Receives XML messages from the WebCrawler topic and generates html pages.
  *
- * The program only stops when there is an exception.
+ * The program does not stop.
  *
  * The user should have the permissions <code>createDurableQueue</code> and
  * <code>deleteDurableQueue</code>.
@@ -81,6 +81,7 @@ public class HTMLSummaryCreator implements Runnable {
         }
 
         // validate message
+        // @xxx doesn't check timestamp
         try {
             XmlHelper.validate(new StreamSource(new StringReader(xml)));
         } catch (Exception ex) {
@@ -167,14 +168,14 @@ public class HTMLSummaryCreator implements Runnable {
         Debug.format("%s: %s\n", Config.PROPERTY_TOPIC_NAME, topicName);
         try {
             connectionFactory = InitialContext.doLookup(topicFactory);
-        } catch (NamingException ex) {
+        } catch (Exception ex) {
             System.out.println("ERROR: Failed to get topic factory.");
             Debug.printStackTrace(ex);
             return false;
         }
         try {
             topic = InitialContext.doLookup(topicName);
-        } catch (NamingException ex) {
+        } catch (Exception ex) {
             System.out.println("ERROR: Failed to get topic.");
             Debug.printStackTrace(ex);
             return false;
@@ -192,10 +193,12 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws Exception If something went wrong.
      */
     private String receive() throws Exception {
-        if (Debug.ENABLED) {
-            // read sample
-            return new String(Files.readAllBytes(Paths.get(getClass().getResource("/is/project1/xml/sample.xml").toURI())));
-        }
+//        if (Debug.ENABLED) {
+//            // read sample
+//            final InputStream sampleStream = getClass().getResourceAsStream("/is/project1/xml/sample.xml");
+//            final String sample = new Scanner(sampleStream, "UTF-8").useDelimiter("\\A").next();
+//            return sample;
+//        }
         // read topic
         try (JMSContext context = connectionFactory.createContext(user, pass)) {
             context.setClientID(CLIENT_ID);

@@ -13,17 +13,23 @@ import java.util.Properties;
  */
 public class Config {
 
+    // property names
     public static final String PROPERTY_USER = "user";
     public static final String PROPERTY_PASS = "pass";
     public static final String PROPERTY_SUMMARY_DIR = "summaryDir";
-    public static final String PROPERTY_TOPIC_FACTORY = "topicFacory";
+    public static final String PROPERTY_TOPIC_FACTORY = "topicFactory";
     public static final String PROPERTY_TOPIC_NAME = "topicName";
+    public static final String PROPERTY_QUEUE_FACTORY = "queueFactory";
+    public static final String PROPERTY_QUEUE_NAME = "queueName";
 
+    // default values
     public static final String DEFAULT_USER = "user";
     public static final String DEFAULT_PASS = "pass";
     public static final String DEFAULT_SUMMARY_DIR = ".";
     public static final String DEFAULT_TOPIC_FACTORY = "jms/RemoteConnectionFactory";
     public static final String DEFAULT_TOPIC_NAME = "IS/Project1/WebCrawlerTopic";
+    public static final String DEFAULT_QUEUE_FACTORY = "jms/RemoteConnectionFactory";
+    public static final String DEFAULT_QUEUE_NAME = "IS/Project1/PriceKeeperQueue";
 
     /**
      * Configuration file.
@@ -85,6 +91,8 @@ public class Config {
         defaults.setProperty(PROPERTY_SUMMARY_DIR, DEFAULT_SUMMARY_DIR);
         defaults.setProperty(PROPERTY_TOPIC_FACTORY, DEFAULT_TOPIC_FACTORY);
         defaults.setProperty(PROPERTY_TOPIC_NAME, DEFAULT_TOPIC_NAME);
+        defaults.setProperty(PROPERTY_QUEUE_FACTORY, DEFAULT_QUEUE_FACTORY);
+        defaults.setProperty(PROPERTY_QUEUE_NAME, DEFAULT_QUEUE_NAME);
         return defaults;
     }
 
