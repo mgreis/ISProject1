@@ -5,6 +5,21 @@
 
 
     <xsl:template match="report/smartphone">
-        <xsl:value-of select="concat( title , ' : ' , price , ' ' , price/@currency ,'&#xA;')"/>
+        <xsl:value-of select="concat('-------------------------------------------------------------------------------------------------------------------------','&#xA;')"/>
+        <xsl:value-of select="concat( title , ' : ' , price , ' ' , price/@currency ,'&#xA;' , url ,'&#xA;','&#xA;')"/>
+        <xsl:for-each select="description">
+            <dt>
+                <xsl:value-of select="@name"/>
+            </dt>
+            <dt>
+                <xsl:value-of select="concat(' ',.,'&#xA;')"/>
+            </dt>
+                       
+                        
+        </xsl:for-each>
+        <dt>
+            <xsl:value-of select="concat('---------------------------------------------------------------------------------------------------------------------','&#xA;')"/>
+            
+        </dt>
     </xsl:template>
 </xsl:stylesheet>
