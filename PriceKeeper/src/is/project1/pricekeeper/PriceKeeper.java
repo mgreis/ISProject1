@@ -194,7 +194,7 @@ public class PriceKeeper implements Runnable {
      * @throws Exception if anything bad happens
      */
     public static void main(String[] args) throws Exception {
-        Debug.main(args);
+        Debug.processMainArgs(args);
         final PriceKeeper app = new PriceKeeper();
         app.run();
     }

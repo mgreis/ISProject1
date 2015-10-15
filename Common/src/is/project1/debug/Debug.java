@@ -54,16 +54,19 @@ public class Debug {
     }
 
     /**
-     * Lê os argumentos da consola para saber se deve estar ativo ou não.
+     * Reads the console arguments to know if debug is enabled or not.
      *
      * @param args
      */
-    public static void main(String[] args) {
+    public static void processMainArgs(String[] args) {
         for (String arg : args) {
-            if ("--debug".equals(arg)) {
-                ENABLED = true;
-            } else if ("--nodebug".equals(arg)) {
-                ENABLED = false;
+            switch (arg) {
+                case "--debug":
+                    ENABLED = true;
+                    break;
+                case "--nodebug":
+                    ENABLED = false;
+                    break;
             }
         }
     }

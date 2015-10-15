@@ -20,6 +20,7 @@
     <!-- copy report -->
     <xsl:template match="report">
         <xsl:copy>
+            <xsl:copy-of select="@*"/>
             <xsl:apply-templates select="smartphone"/>
         </xsl:copy>
     </xsl:template>

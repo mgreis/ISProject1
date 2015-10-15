@@ -1,22 +1,11 @@
 package is.project1.pricerequester;
 
-/**
- * JMS Training Part (doesn’t count for evaluation)
- *
- * 3. Write code that sends text messages to multiple subscribers at once.
- */
 import is.project1.config.Config;
 import is.project1.debug.Debug;
 import is.project1.xml.XmlHelper;
-import java.io.Console;
-import java.io.File;
-import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Properties;
 import java.util.Scanner;
 import javax.jms.ConnectionFactory;
@@ -26,11 +15,9 @@ import javax.jms.JMSException;
 import javax.jms.TemporaryQueue;
 import javax.jms.TextMessage;
 import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamResult;
 import javax.xml.transform.stream.StreamSource;
-import org.w3c.dom.Document;
 
 public class PriceRequester implements Runnable {
 
@@ -79,26 +66,25 @@ public class PriceRequester implements Runnable {
                 return;
             }
 
-            // write to console (uses external stylesheet)
+            // write to console (uses stylesheet)
             try {
-                
-                
-                 // get search template
+
+                // get search template
                 // https://weblogs.java.net/blog/pat/archive/2004/10/stupid_scanner.html
-                final InputStream xslStream = getClass().getResourceAsStream("/is/project1/pricerequeste/to_text.xsl");
+                final InputStream xslStream = getClass().getResourceAsStream("/is/project1/pricerequester/to_text.xsl");
                 final String xsl = new Scanner(xslStream, "UTF-8").useDelimiter("\\A").next();
-                
-                 //transform xml to plain text
+
+                //transform xml to plain text
                 final StringWriter writer = new StringWriter();
                 TransformerFactory.newInstance()
                         .newTransformer(new StreamSource(new StringReader(xsl)))
                         .transform(new StreamSource(new StringReader(xml)), new StreamResult(writer));
-                
+
                 //print to screen
                 System.out.println(writer.toString());
 
             } catch (Exception ex) {
-                System.out.println("ERROR: Failed to write xml.");
+                System.out.println("ERROR: Failed to write results.");
                 Debug.printStackTrace(ex);
                 return;
             }
@@ -165,18 +151,10 @@ public class PriceRequester implements Runnable {
         return true; // all ok
     }
 
-    /*public static void main(String[] args) throws NamingException, JMSException {
-        
-     PriceRequester s = new PriceRequester();
-     String reply = s.sendAndReceive("Hello Receiver!");
-     System.out.println("Message: " + reply);
-     }*/
     public static void main(String[] args) throws Exception {
-        Debug.main(args);
-        do {
-            final PriceRequester app = new PriceRequester();
-            app.run();
-        } while (!Debug.ENABLED); // infinite loop if not debugging
+        Debug.processMainArgs(args);
+        final PriceRequester app = new PriceRequester();
+        app.run();
     }
 
 }

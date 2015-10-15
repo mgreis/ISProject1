@@ -214,7 +214,7 @@ public class HTMLSummaryCreator implements Runnable {
      * @throws Exception if anything bad happens
      */
     public static void main(String[] args) throws Exception {
-        Debug.main(args);
+        Debug.processMainArgs(args);
         do {
             final HTMLSummaryCreator app = new HTMLSummaryCreator();
             app.run();
