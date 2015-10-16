@@ -4,7 +4,7 @@ This is a sample file produced according to schema.xsd.
 that will be produced from the following url:
 http://www.pixmania.pt/telefones/telemovel/smartphone/xx-xx-xx-xx-topsellers-1-100-page-19883-s.html
 -->
-<report version="1.0" timestamp="1444595841" crawler="sample.xml">
+<report version="1.0" timestamp="0" crawler="sample.xml">
     <smartphone>
         <title>SAMSUNG Galaxy S5 - preto - Smartphone</title>
         <description name="processador">Quad-Core 2,5 GHz memória RAM: 2 GB</description>

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-    Document   : transform.xsl
-    Created on : October 4, 2015, 3:56 PM
+    Document   : to_html.xsl
     Author     : Flávio J. Saraiva
     Description:
         Create a summary of the xml data.

@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <!--
-    Document   : seach.xsl
-    Created on : October 4, 2015, 3:56 PM
+    Document   : search.xsl
     Author     : Flávio J. Saraiva
     Description:
         Search for smarphones with a specific content by replacing %XPATH%.
