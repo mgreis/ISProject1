@@ -45,7 +45,7 @@ import java.io.FileWriter;
  * The program only stops when there is an exception.
  *
  *
- *
+ * @author Flávio J. Saraiva.
  * @author Mário Alves Pereira.
  */
 public class Sender implements Runnable {
